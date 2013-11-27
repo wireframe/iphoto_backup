@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+
+require File.join(File.dirname(__FILE__), '..', 'lib', 'iphoto_backup', 'cli.rb')
+IphotoBackup::CLI.start(ARGV)
