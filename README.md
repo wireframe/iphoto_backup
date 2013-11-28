@@ -2,6 +2,8 @@
 
 TODO: Write a gem description
 
+[Originally implemented as a Python script](https://github.com/wireframe/dotfiles/blob/628b982d9fc4e7b4cc9e6ca806cae81b541f9bbd/home/bin/iphoto_export.py)
+
 ## Installation
 
 Add this line to your application's Gemfile:
