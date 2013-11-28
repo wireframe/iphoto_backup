@@ -5,29 +5,21 @@ require 'fileutils'
 module IphotoBackup
   class CLI < Thor
     IPHOTO_ALBUM_PATH = "~/Pictures/iPhoto Library.photolibrary/AlbumData.xml"
-    OUTPUT_DIRECTORY = "~/tmp/Google Drive/Dropbox"
+    DEFAULT_OUTPUT_DIRECTORY = "~/Google Drive/Dropbox"
 
     desc "export iPhoto albums", "exports iPhoto albums into target directory"
     option :filter, aliases: '-e', default: '.*'
+    option :output, aliases: '-o', default: DEFAULT_OUTPUT_DIRECTORY
     def export
-      filter = Regexp.new options[:filter]
+      each_album do |folder_name, album_info|
+        say "\n\nProcessing Roll: #{folder_name}..."
 
-      each_album do |album|
-        folder = value_for_dictionary_key('RollName', album).content
-
-        unless folder.match(filter)
-          say "\n\n#{folder} does not match the filter: #{filter.inspect}"
-          next
-        end
-
-        say "\n\nProcessing Roll: #{folder}..."
-
-        album_images = value_for_dictionary_key('KeyList', album).css('string').map(&:content)
+        album_images = value_for_dictionary_key('KeyList', album_info).css('string').map(&:content)
         album_images.each do |image_id|
           image_info = info_for_image image_id
           source_path = value_for_dictionary_key('ImagePath', image_info).content
 
-          target_path = File.join(File.expand_path(OUTPUT_DIRECTORY), folder, File.basename(source_path))
+          target_path = File.join(File.expand_path(options[:output]), folder_name, File.basename(source_path))
           target_dir = File.dirname target_path
           FileUtils.mkdir_p(target_dir) unless Dir.exists?(target_dir)
 
@@ -45,8 +37,14 @@ module IphotoBackup
 
     def each_album(&block)
       albums = value_for_dictionary_key("List of Rolls").children.select {|n| n.name == 'dict' }
-      albums.each do |album|
-        yield album
+      albums.each do |album_info|
+        folder_name = value_for_dictionary_key('RollName', album_info).content
+
+        if folder_name.match(album_filter)
+          yield folder_name, album_info
+        else
+          say "\n\n#{folder_name} does not match the filter: #{album_filter.inspect}"
+        end
       end
     end
 
@@ -67,6 +65,10 @@ module IphotoBackup
         break if element_node.element?
       end
       element_node
+    end
+
+    def album_filter
+      @album_filter ||= Regexp.new(options[:filter])
     end
 
     def master_images
