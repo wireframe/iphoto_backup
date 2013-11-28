@@ -18,6 +18,4 @@ describe IphotoBackup::CLI do
       should meet_expectations
     end
   end
-
-
 end
