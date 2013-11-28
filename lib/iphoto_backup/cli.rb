@@ -8,11 +8,17 @@ module IphotoBackup
     OUTPUT_DIRECTORY = "~/tmp/Google Drive/Dropbox"
 
     desc "export iPhoto albums", "exports iPhoto albums into target directory"
-    # option :regex, aliases: '-e'
+    option :filter, aliases: '-e', default: '.*'
     def export
+      filter = Regexp.new options[:filter]
+
       each_album do |album|
         folder = value_for_dictionary_key('RollName', album).content
-        # TODO: check if folder matches regex
+
+        unless folder.match(filter)
+          say "\n\n#{folder} does not match the filter: #{filter.inspect}"
+          next
+        end
 
         say "\n\nProcessing Roll: #{folder}..."
 
