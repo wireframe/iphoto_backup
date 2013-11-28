@@ -32,6 +32,7 @@ module IphotoBackup
         end
       end
     end
+    default_command :export
 
     private
 
