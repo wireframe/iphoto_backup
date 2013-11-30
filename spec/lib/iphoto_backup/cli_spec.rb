@@ -25,17 +25,34 @@ describe IphotoBackup::CLI do
     before do
       cli.export
     end
-    it 'creates folder for first event' do
-      expect(File.exists?('tmp/backup/2013-06-06 Summer Party')).to be_true
+    context 'with basic options' do
+      it 'creates folder for first event' do
+        expect(File.exists?('tmp/backup/2013-06-06 Summer Party')).to be_true
+      end
+      it 'creates folder for second event' do
+        expect(File.exists?('tmp/backup/2013-10-10 Fall Supper')).to be_true
+      end
+      it 'copies images for first event' do
+        expect(Dir.glob('tmp/backup/2013-06-06 Summer Party/*.jpg').length).to eq 2
+      end
+      it 'copies images for second event' do
+        expect(Dir.glob('tmp/backup/2013-10-10 Fall Supper/*.jpg').length).to eq 2
+      end
     end
-    it 'creates folder for second event' do
-      expect(File.exists?('tmp/backup/2013-10-10 Fall Supper')).to be_true
-    end
-    it 'copies images for first event' do
-      expect(Dir.glob('tmp/backup/2013-06-06 Summer Party/*.jpg').length).to eq 2
-    end
-    it 'copies images for second event' do
-      expect(Dir.glob('tmp/backup/2013-10-10 Fall Supper/*.jpg').length).to eq 2
+    context 'when filter only matches first event' do
+      let(:options) {
+        {
+          config: 'spec/fixtures/AlbumData.xml',
+          output: TMP_OUTPUT_DIRECTORY,
+          filter: 'Summer'
+        }
+      }
+      it 'creates folder for first event' do
+        expect(File.exists?('tmp/backup/2013-06-06 Summer Party')).to be_true
+      end
+      it 'does not createfolder for second event' do
+        expect(File.exists?('tmp/backup/2013-10-10 Fall Supper')).to be_false
+      end
     end
   end
 end
