@@ -10,6 +10,7 @@ module IphotoBackup
     desc "export iPhoto albums", "exports iPhoto albums into target directory"
     option :filter, aliases: '-e', default: '.*'
     option :output, aliases: '-o', default: DEFAULT_OUTPUT_DIRECTORY
+    option :config, aliases: '-c', default: IPHOTO_ALBUM_PATH
     def export
       each_album do |folder_name, album_info|
         say "\n\nProcessing Roll: #{folder_name}..."
@@ -78,7 +79,8 @@ module IphotoBackup
 
     def root_dictionary
       @root_dictionary ||= begin
-        file = File.expand_path IPHOTO_ALBUM_PATH
+        file = File.expand_path options[:config]
+        say "Loading AlbumData: #{file}"
         doc = Nokogiri.XML(File.read(file))
         doc.child.children.find {|n| n.name == 'dict' }
       end
