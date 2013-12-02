@@ -15,9 +15,7 @@ module IphotoBackup
       each_album do |folder_name, album_info|
         say "\n\nProcessing Roll: #{folder_name}..."
 
-        album_images = value_for_dictionary_key('KeyList', album_info).css('string').map(&:content)
-        album_images.each do |image_id|
-          image_info = info_for_image image_id
+        each_image(album_info) do |image_info|
           source_path = value_for_dictionary_key('ImagePath', image_info).content
 
           target_path = File.join(File.expand_path(options[:output]), folder_name, File.basename(source_path))
@@ -47,6 +45,14 @@ module IphotoBackup
         else
           say "\n\n#{folder_name} does not match the filter: #{album_filter.inspect}"
         end
+      end
+    end
+
+    def each_image(album_info, &block)
+      album_images = value_for_dictionary_key('KeyList', album_info).css('string').map(&:content)
+      album_images.each do |image_id|
+        image_info = info_for_image image_id
+        yield image_info
       end
     end
 
