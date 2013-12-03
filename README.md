@@ -1,7 +1,9 @@
 # iphoto_backup
 
-> Every photo deserves to live in a folder on the filesystem and not 
+> Every photo deserves to live in a folder on the filesystem and not
 > to be locked up in some cryptic and proprietary iPhoto metadata XML file.
+
+[![Build Status](https://travis-ci.org/wireframe/iphoto_backup.png)](https://travis-ci.org/wireframe/iphoto_backup)
 
 iphoto_backup is a tool to simplify backups and archiving of your iPhoto images.
 
