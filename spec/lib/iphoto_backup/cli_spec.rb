@@ -2,6 +2,8 @@ require 'spec_helper'
 
 describe IphotoBackup::CLI do
   TMP_OUTPUT_DIRECTORY = 'tmp/backup'
+  PROJECT_DIR = File.expand_path(File.join(File.expand_path(__dir__), '../../../'))
+
   let(:args) { [] }
   let(:options) {
     {
@@ -20,7 +22,7 @@ describe IphotoBackup::CLI do
   before do
     template = File.read('spec/fixtures/AlbumData.xml.erb')
     erb = ERB.new(template)
-    PROJECT_DIR = File.expand_path(File.join(File.expand_path(__dir__), '../../../'))
+    FileUtils.mkdir('tmp') unless File.exists?('tmp')
     File.open('tmp/AlbumData.xml', 'w+') do |f|
       f << erb.result(binding)
     end
