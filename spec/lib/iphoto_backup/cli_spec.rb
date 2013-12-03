@@ -5,7 +5,7 @@ describe IphotoBackup::CLI do
   let(:args) { [] }
   let(:options) {
     {
-      config: 'spec/fixtures/AlbumData.xml',
+      config: 'tmp/AlbumData.xml',
       output: TMP_OUTPUT_DIRECTORY,
       filter: '.*'
     }
@@ -17,6 +17,14 @@ describe IphotoBackup::CLI do
   end
   let(:cli) { IphotoBackup::CLI.new(args, options, config) }
 
+  before do
+    template = File.read('spec/fixtures/AlbumData.xml.erb')
+    erb = ERB.new(template)
+    PROJECT_DIR = File.expand_path(File.join(File.expand_path(__dir__), '../../../'))
+    File.open('tmp/AlbumData.xml', 'w+') do |f|
+      f << erb.result(binding)
+    end
+  end
   after do
     FileUtils.rm_rf TMP_OUTPUT_DIRECTORY
   end
@@ -42,7 +50,7 @@ describe IphotoBackup::CLI do
     context 'when filter only matches first event' do
       let(:options) {
         {
-          config: 'spec/fixtures/AlbumData.xml',
+          config: 'tmp/AlbumData.xml',
           output: TMP_OUTPUT_DIRECTORY,
           filter: 'Summer'
         }

@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/wireframe/iphoto_backup.png)](https://travis-ci.org/wireframe/iphoto_backup)
+[![Build Status](https://travis-ci.org/wireframe/iphoto_backup.png?branch=master)](https://travis-ci.org/wireframe/iphoto_backup)
 
 # iphoto_backup
 
