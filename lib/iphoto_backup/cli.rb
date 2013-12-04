@@ -8,11 +8,11 @@ module IphotoBackup
     DEFAULT_OUTPUT_DIRECTORY = "~/Google Drive/Dropbox"
     IPHOTO_EPOCH = Time.new(2001, 1, 1)
 
-    desc "export iPhoto albums", "exports iPhoto albums into target directory"
-    option :filter, aliases: '-e', default: '.*'
-    option :output, aliases: '-o', default: DEFAULT_OUTPUT_DIRECTORY
-    option :config, aliases: '-c', default: IPHOTO_ALBUM_PATH
-    option :'date-prefix', aliases: '-d', default: false
+    desc "export [OPTIONS]", "exports iPhoto albums into target directory"
+    option :filter, desc: 'filter to only include albums that match the given regex', aliases: '-e', default: '.*'
+    option :output, desc: 'directory to export albums to', aliases: '-o', default: DEFAULT_OUTPUT_DIRECTORY
+    option :config, desc: 'iPhoto AlbumData.xml file to process', aliases: '-c', default: IPHOTO_ALBUM_PATH
+    option :'include-date-prefix', desc: 'automatically include ISO8601 date prefix to exported events', aliases: '-d', default: false, type: :boolean
     def export
       each_album do |folder_name, album_info|
         say "\n\nProcessing Roll: #{folder_name}..."
@@ -58,7 +58,7 @@ module IphotoBackup
         each_image album_info do |image_info|
           next if album_date
           photo_interval = value_for_dictionary_key('DateAsTimerInterval', image_info).content.to_i
-          album_date = (IPHOTO_EPOCH + photo_interval).to_date
+          album_date = (IPHOTO_EPOCH + photo_interval).strftime('%Y-%d-%m')
         end
         say "Automatically adding #{album_date} prefix to folder: #{folder_name}"
         folder_name = "#{album_date} #{folder_name}"
