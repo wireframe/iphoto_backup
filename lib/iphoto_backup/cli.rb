@@ -40,18 +40,7 @@ module IphotoBackup
     def each_album(&block)
       albums = value_for_dictionary_key("List of Rolls").children.select {|n| n.name == 'dict' }
       albums.each do |album_info|
-        folder_name = value_for_dictionary_key('RollName', album_info).content
-
-        if options[:'include-date-prefix'] && folder_name !~ /^\d{4}-\d{2}-\d{2} /
-          album_date = nil
-          each_image album_info do |image_info|
-            next if album_date
-            photo_interval = value_for_dictionary_key('DateAsTimerInterval', image_info).content.to_i
-            album_date = (IPHOTO_EPOCH + photo_interval).to_date
-          end
-          say "Automatically adding #{album_date} prefix to folder: #{folder_name}"
-          folder_name = "#{album_date} #{folder_name}"
-        end
+        folder_name = album_name album_info
 
         if folder_name.match(album_filter)
           yield folder_name, album_info
@@ -59,6 +48,22 @@ module IphotoBackup
           say "\n\n#{folder_name} does not match the filter: #{album_filter.inspect}"
         end
       end
+    end
+
+    def album_name(album_info)
+      folder_name = value_for_dictionary_key('RollName', album_info).content
+
+      if options[:'include-date-prefix'] && folder_name !~ /^\d{4}-\d{2}-\d{2} /
+        album_date = nil
+        each_image album_info do |image_info|
+          next if album_date
+          photo_interval = value_for_dictionary_key('DateAsTimerInterval', image_info).content.to_i
+          album_date = (IPHOTO_EPOCH + photo_interval).to_date
+        end
+        say "Automatically adding #{album_date} prefix to folder: #{folder_name}"
+        folder_name = "#{album_date} #{folder_name}"
+      end
+      folder_name
     end
 
     def each_image(album_info, &block)
