@@ -6,11 +6,13 @@ module IphotoBackup
   class CLI < Thor
     IPHOTO_ALBUM_PATH = "~/Pictures/iPhoto Library.photolibrary/AlbumData.xml"
     DEFAULT_OUTPUT_DIRECTORY = "~/Google Drive/Dropbox"
+    IPHOTO_EPOCH = Time.new(2001, 1, 1)
 
     desc "export iPhoto albums", "exports iPhoto albums into target directory"
     option :filter, aliases: '-e', default: '.*'
     option :output, aliases: '-o', default: DEFAULT_OUTPUT_DIRECTORY
     option :config, aliases: '-c', default: IPHOTO_ALBUM_PATH
+    option :'date-prefix', aliases: '-d', default: false
     def export
       each_album do |folder_name, album_info|
         say "\n\nProcessing Roll: #{folder_name}..."
@@ -39,6 +41,17 @@ module IphotoBackup
       albums = value_for_dictionary_key("List of Rolls").children.select {|n| n.name == 'dict' }
       albums.each do |album_info|
         folder_name = value_for_dictionary_key('RollName', album_info).content
+
+        if options[:'include-date-prefix'] && folder_name !~ /^\d{4}-\d{2}-\d{2} /
+          album_date = nil
+          each_image album_info do |image_info|
+            next if album_date
+            photo_interval = value_for_dictionary_key('DateAsTimerInterval', image_info).content.to_i
+            album_date = (IPHOTO_EPOCH + photo_interval).to_date
+          end
+          say "Automatically adding #{album_date} prefix to folder: #{folder_name}"
+          folder_name = "#{album_date} #{folder_name}"
+        end
 
         if folder_name.match(album_filter)
           yield folder_name, album_info
