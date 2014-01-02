@@ -58,7 +58,7 @@ module IphotoBackup
         each_image album_info do |image_info|
           next if album_date
           photo_interval = value_for_dictionary_key('DateAsTimerInterval', image_info).content.to_i
-          album_date = (IPHOTO_EPOCH + photo_interval).strftime('%Y-%d-%m')
+          album_date = (IPHOTO_EPOCH + photo_interval).strftime('%Y-%m-%d')
         end
         say "Automatically adding #{album_date} prefix to folder: #{folder_name}"
         folder_name = "#{album_date} #{folder_name}"
