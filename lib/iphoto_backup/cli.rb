@@ -13,6 +13,7 @@ module IphotoBackup
     option :output, desc: 'directory to export albums to', aliases: '-o', default: DEFAULT_OUTPUT_DIRECTORY
     option :config, desc: 'iPhoto AlbumData.xml file to process', aliases: '-c', default: IPHOTO_ALBUM_PATH
     option :'include-date-prefix', desc: 'automatically include ISO8601 date prefix to exported events', aliases: '-d', default: false, type: :boolean
+    option :albums, desc: 'export albums instead of events', aliases: '-a', default: false, type: :boolean
     def export
       each_album do |folder_name, album_info|
         say "\n\nProcessing Roll: #{folder_name}..."
@@ -38,7 +39,7 @@ module IphotoBackup
     private
 
     def each_album(&block)
-      albums = value_for_dictionary_key("List of Rolls").children.select {|n| n.name == 'dict' }
+      albums = value_for_dictionary_key(album_type).children.select {|n| n.name == 'dict' }
       albums.each do |album_info|
         folder_name = album_name album_info
 
@@ -48,6 +49,10 @@ module IphotoBackup
           say "\n\n#{folder_name} does not match the filter: #{album_filter.inspect}"
         end
       end
+    end
+
+    def album_type
+      options[:album] ? 'List of Albums' : 'List of Rolls'
     end
 
     def album_name(album_info)
