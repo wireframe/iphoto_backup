@@ -13,24 +13,13 @@ module IphotoBackup
     option :output, desc: 'directory to export albums to', aliases: '-o', default: DEFAULT_OUTPUT_DIRECTORY
     option :config, desc: 'iPhoto AlbumData.xml file to process', aliases: '-c', default: IPHOTO_ALBUM_PATH
     option :'include-date-prefix', desc: 'automatically include ISO8601 date prefix to exported events', aliases: '-d', default: false, type: :boolean
-    option :albums, desc: 'export albums instead of events', aliases: '-a', default: false, type: :boolean
+    option :albums, desc: 'use albums for the export instead of events', aliases: '-a', default: false, type: :boolean
     def export
-      each_album do |folder_name, album_info|
-        say "\n\nProcessing Roll: #{folder_name}..."
+      each_photoset do |folder_name, album_info|
+        say "\n\nProcessing photos: #{folder_name}..."
 
         each_image(album_info) do |image_info|
-          source_path = value_for_dictionary_key('ImagePath', image_info).content
-
-          target_path = File.join(File.expand_path(options[:output]), folder_name, File.basename(source_path))
-          target_dir = File.dirname target_path
-          FileUtils.mkdir_p(target_dir) unless Dir.exists?(target_dir)
-
-          if FileUtils.uptodate?(source_path, [ target_path ])
-            say "  copying #{source_path} to #{target_path}"
-            FileUtils.copy source_path, target_path, preserve: true
-          else
-            print '.'
-          end
+          export_image(folder_name, image_info)
         end
       end
     end
@@ -38,37 +27,71 @@ module IphotoBackup
 
     private
 
+    def export_image(folder_name, image_info)
+      source_path = value_for_dictionary_key('ImagePath', image_info).content
+
+      target_path = File.join(File.expand_path(options[:output]), folder_name, File.basename(source_path))
+      target_dir = File.dirname target_path
+      FileUtils.mkdir_p(target_dir) unless Dir.exists?(target_dir)
+
+      if FileUtils.uptodate?(source_path, [target_path])
+        say "  copying #{source_path} to #{target_path}"
+        FileUtils.copy source_path, target_path, preserve: true
+      else
+        print '.'
+      end
+    end
+
+    def each_photoset(&block)
+      if options[:albums]
+        each_album(&block)
+      else
+        each_event(&block)
+      end
+    end
+
+    def each_event(&block)
+      events = value_for_dictionary_key('List of Rolls').children.select {|n| n.name == 'dict' }
+      events.each do |album_info|
+        event_name = value_for_dictionary_key('RollName', album_info).content
+        process_folder(event_name, album_info, &block)
+      end
+    end
+
     def each_album(&block)
-      albums = value_for_dictionary_key(album_type).children.select {|n| n.name == 'dict' }
+      albums = value_for_dictionary_key('List of Albums').children.select {|n| n.name == 'dict' }
       albums.each do |album_info|
-        folder_name = album_name album_info
-
-        if folder_name.match(album_filter)
-          yield folder_name, album_info
-        else
-          say "\n\n#{folder_name} does not match the filter: #{album_filter.inspect}"
-        end
+        album_name = value_for_dictionary_key('AlbumName', album_info).content
+        next if album_name == 'Photos'
+        process_folder(album_name, album_info, &block)
       end
     end
 
-    def album_type
-      options[:album] ? 'List of Albums' : 'List of Rolls'
+    def process_folder(folder, album_info, &block)
+      folder_name = add_date_to_folder_name(folder, album_info)
+
+      if folder_name.match(album_filter)
+        yield folder_name, album_info
+      else
+        say "\n\n#{folder_name} does not match the filter: #{album_filter.inspect}"
+      end
     end
 
-    def album_name(album_info)
-      folder_name = value_for_dictionary_key('RollName', album_info).content
+    def add_date_to_folder_name(folder_name, album_info)
+      return folder_name unless options[:'include-date-prefix']
+      return folder_name if folder_name =~ /^\d{4}-\d{2}-\d{2} /
+      [album_date(album_info), folder_name].compact.join(' ')
+    end
 
-      if options[:'include-date-prefix'] && folder_name !~ /^\d{4}-\d{2}-\d{2} /
-        album_date = nil
-        each_image album_info do |image_info|
-          next if album_date
-          photo_interval = value_for_dictionary_key('DateAsTimerInterval', image_info).content.to_i
-          album_date = (IPHOTO_EPOCH + photo_interval).strftime('%Y-%m-%d')
-        end
-        say "Automatically adding #{album_date} prefix to folder: #{folder_name}"
-        folder_name = "#{album_date} #{folder_name}"
+    # infer the date from the first image within the album
+    def album_date(album_info)
+      album_date = nil
+      each_image album_info do |image_info|
+        next if album_date
+        photo_interval = value_for_dictionary_key('DateAsTimerInterval', image_info).content.to_i
+        album_date = (IPHOTO_EPOCH + photo_interval).strftime('%Y-%m-%d')
       end
-      folder_name
+      album_date
     end
 
     def each_image(album_info, &block)

@@ -60,7 +60,7 @@ describe IphotoBackup::CLI do
       it 'creates folder for first event' do
         expect(File.exists?('tmp/backup/Summer Party')).to eq true
       end
-      it 'does not createfolder for second event' do
+      it 'does not create folder for second event' do
         expect(File.exists?('tmp/backup/2013-10-10 Fall Supper')).to eq false
       end
     end
@@ -74,7 +74,19 @@ describe IphotoBackup::CLI do
         }
       }
       it 'creates folder for album' do
-        expect(File.exists?('tmp/backup/Summer Party')).to eq true
+        expect(File.exists?('tmp/backup/My Vacation')).to eq true
+      end
+      it 'copies images for album' do
+        expect(Dir.glob('tmp/backup/My Vacation/*.jpg').length).to eq 2
+      end
+      it 'does not create folder for Photos album' do
+        expect(File.exists?('tmp/backup/Photos')).to eq false
+      end
+      it 'does not create folder for first event' do
+        expect(File.exists?('tmp/backup/Summer Party')).to eq false
+      end
+      it 'does not create folder for second event' do
+        expect(File.exists?('tmp/backup/2013-10-10 Fall Supper')).to eq false
       end
     end
     context 'with --include-date-prefix option' do
